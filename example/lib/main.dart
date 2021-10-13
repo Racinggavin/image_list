@@ -139,6 +139,7 @@ class _MyAppState extends State<MyApp> {
                             },
                             selections: _selections,
                             fileNamePrefix: "AdvImageExample",
+                            spanCount: 4,
                           ),
                         ),
                         Padding(

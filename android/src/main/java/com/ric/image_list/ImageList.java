@@ -66,6 +66,7 @@ public class ImageList implements MethodChannel.MethodCallHandler,
     private ArrayList<MediaData> selectedImages = new ArrayList<>();
     private int imageListColor;
     private int itemColor;
+    private int spanCount = 3;
 
     ImageList(
             int id,
@@ -80,9 +81,6 @@ public class ImageList implements MethodChannel.MethodCallHandler,
         view = LayoutInflater.from(context).inflate(R.layout.image_list, null);
 
         recyclerView = view.findViewById(R.id.rv_image_list);//new RecyclerView(context);
-        layoutManager = new GridLayoutManager(context, 3, RecyclerView.VERTICAL, false);
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.requestDisallowInterceptTouchEvent(true);
 
 
         if (args instanceof HashMap) {
@@ -97,6 +95,9 @@ public class ImageList implements MethodChannel.MethodCallHandler,
             imageListColor = Color.parseColor("#" + imageListColorString);
             String itemColorString = params.get("itemColor").toString();
             itemColor = Color.parseColor("#" + itemColorString);
+            if(params.get("spanCount") != null) {
+                spanCount = Integer.valueOf(params.get("spanCount").toString());
+            }
 
             if (params.get("selections") != null) {
                 List selections = (ArrayList) params.get("selections");
@@ -120,6 +121,10 @@ public class ImageList implements MethodChannel.MethodCallHandler,
                 }
             }
         }
+        layoutManager = new GridLayoutManager(context, spanCount, RecyclerView.VERTICAL, false);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.requestDisallowInterceptTouchEvent(true);
+
 
         recyclerView.setBackgroundColor(imageListColor);
 

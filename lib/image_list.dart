@@ -25,6 +25,7 @@ class ImageList extends StatefulWidget {
   final List<MediaType> types;
   final Color imageListColor;
   final Color itemColor;
+  final int spanCount;
 
   ImageList({
     this.albumId,
@@ -37,6 +38,7 @@ class ImageList extends StatefulWidget {
     required this.types,
     this.imageListColor = Colors.white,
     this.itemColor = Colors.white,
+    this.spanCount = 3,
   });
 
   @override
@@ -88,6 +90,7 @@ class _ImageListState extends State<ImageList> {
           .join("-"),
       'imageListColor': widget.imageListColor.value.toRadixString(16),
       'itemColor': widget.itemColor.value.toRadixString(16),
+      'spanCount': widget.spanCount,
     };
 
     if (defaultTargetPlatform == TargetPlatform.android) {

@@ -51,6 +51,9 @@ public class ImageListView : NSObject, FlutterPlatformView {
             self.types = (dict["types"] as? String)!
             self.imageListColor = (dict["imageListColor"] as? String)!
             self.itemColor = (dict["itemColor"] as? String)!
+			if let spanCount = dict["spanCount"] as? Int {
+				x.itemsPerRow = spanCount
+            }
         }
 
         assetStore = AssetStore(assets: [Asset?](repeating: nil, count: selections.count))
