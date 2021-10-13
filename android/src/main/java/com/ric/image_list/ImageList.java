@@ -127,6 +127,9 @@ public class ImageList implements MethodChannel.MethodCallHandler,
 
 
         recyclerView.setBackgroundColor(imageListColor);
+        recyclerView.addItemDecoration(new ItemDecorationAlbumColumns(
+                1,
+                spanCount));
 
         if (checkPermission()) {
             long bucketId = 0;
