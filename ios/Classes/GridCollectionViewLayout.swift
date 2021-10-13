@@ -22,10 +22,28 @@
 
 import UIKit
 
+private let separatorDecorationView = "separator"
 /**
  Provides a grid collection view layout
  */
-public final class GridCollectionViewLayout: UICollectionViewLayout {
+public class GridCollectionViewLayout: UICollectionViewLayout {
+	private var minimumLineSpacing: Double = 1
+
+	//    override func awakeFromNib() {
+	//        super.awakeFromNib()
+	//        register(SeparatorView.self, forDecorationViewOfKind: separatorDecorationView)
+	//    }
+		
+	override init() {
+		super.init()
+		register(SeparatorView.self, forDecorationViewOfKind: separatorDecorationView)
+		
+	}
+	
+	required init?(coder aDecoder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+	
     /**
      Spacing between items (horizontal and vertical)
      */
@@ -86,9 +104,38 @@ public final class GridCollectionViewLayout: UICollectionViewLayout {
      See UICollectionViewLayout documentation
      */
     public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
-        return indexPathsInRect(rect).map { (indexPath) -> UICollectionViewLayoutAttributes? in
-            return self.layoutAttributesForItem(at: indexPath)
-            }.compactMap { $0 }
+		let layoutAttributes = indexPathsInRect(rect).map { (indexPath) -> UICollectionViewLayoutAttributes? in
+				return self.layoutAttributesForItem(at: indexPath)
+			}.compactMap { $0 }
+//		let lineWidth = self.minimumLineSpacing
+//
+//		var decorationAttributes: [UICollectionViewLayoutAttributes] = []
+//		var decorationAttributes2: [UICollectionViewLayoutAttributes] = []
+//
+//		// skip first cell
+//		for layoutAttribute in layoutAttributes where layoutAttribute.indexPath.item > 0 {
+//			let cellFrame = layoutAttribute.frame
+//
+//			let separatorAttribute = UICollectionViewLayoutAttributes(forDecorationViewOfKind: separatorDecorationView,
+//																	  with: layoutAttribute.indexPath)
+//			separatorAttribute.frame = CGRect(x: cellFrame.origin.x,
+//											  y: cellFrame.origin.y - lineWidth,
+//											  width: cellFrame.size.width,
+//											  height: lineWidth)
+//			separatorAttribute.zIndex = Int.max
+//			decorationAttributes.append(separatorAttribute)
+//
+//			let separatorAttribute2 = UICollectionViewLayoutAttributes(forDecorationViewOfKind: separatorDecorationView,
+//																	  with: layoutAttribute.indexPath)
+//			separatorAttribute2.frame = CGRect(x: cellFrame.origin.x + cellFrame.size.width - lineWidth - 1,
+//											   y: cellFrame.origin.y,
+//											   width: lineWidth,
+//											   height: cellFrame.size.height - lineWidth - 1)
+//			separatorAttribute2.zIndex = Int.max
+//			decorationAttributes2.append(separatorAttribute2)
+//		}
+		
+        return layoutAttributes /*+ decorationAttributes + decorationAttributes2*/
     }
     
     /**
@@ -106,16 +153,16 @@ public final class GridCollectionViewLayout: UICollectionViewLayout {
         
         let x = (CGFloat(rowIndex) * itemSpacing) + (CGFloat(rowIndex) * itemSize.width)
         let y = (CGFloat(row) * itemSpacing) + (CGFloat(row) * itemSize.height)
-        let width = itemSize.width
-        let height = itemSize.height
+		let width = row == (itemsPerRow-1) ? itemSize.width : itemSize.width - self.minimumLineSpacing
+        let height = itemSize.height - self.minimumLineSpacing
         
         let attribute = UICollectionViewLayoutAttributes(forCellWith: indexPath)
         attribute.frame = CGRect(x: x, y: y, width: width, height: height)
         
         return attribute
     }
-    
-    /**
+
+	/**
      See UICollectionViewLayout documentation
      */
     public override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
@@ -135,6 +182,7 @@ public final class GridCollectionViewLayout: UICollectionViewLayout {
     public override func layoutAttributesForSupplementaryView(ofKind elementKind: String, at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
         return nil
     }
+
 }
 
 extension GridCollectionViewLayout {
