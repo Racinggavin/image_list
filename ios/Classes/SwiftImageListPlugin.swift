@@ -22,6 +22,9 @@ public class SwiftImageListPlugin: NSObject, FlutterPlugin {
         case "getThumbnail":
             getThumbnail(call, result: result)
             break;
+		case "getOriginal":
+			getOriginal(call, result: result)
+			break;
         case "getAlbumThumbnail":
             getAlbumThumbnail(call, result: result)
             break;
@@ -157,6 +160,7 @@ public class SwiftImageListPlugin: NSObject, FlutterPlugin {
         var image: UIImage? = rawImage
         
         if size != nil || (width != nil && height != nil) {
+            print("getThumbnail width: $width height $height")
             if (width == nil || height == nil) {
                 width = size
                 height = size
@@ -168,7 +172,77 @@ public class SwiftImageListPlugin: NSObject, FlutterPlugin {
         
         result(image?.jpegData(compressionQuality: quality))
     }
-    
+
+	private func getOriginal(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+		let args = call.arguments as? Dictionary<String, Any>
+		let uri = (args?["uri"] as? String)
+		let quality = (args?["quality"] as? CGFloat) ?? 100
+		
+		if uri == nil {
+			result(nil)
+			return
+		}
+		
+		let url = URL(fileURLWithPath: uri!)
+		let imgData = try? Data(contentsOf: url)
+		
+		if imgData == nil {
+			result(nil)
+			return
+		}
+		
+		var format: String = "unknown"
+		
+		switch imgData![0] {
+		case 0x89:
+			format = "png"
+		case 0xFF:
+			format = "jpg"
+		case 0x47:
+			format = "gif"
+		case 0x49, 0x4D:
+			format = "tiff"
+		case 0x52 where imgData!.count >= 12:
+			let subdata = imgData![0...11]
+
+			if let dataString = String(data: subdata, encoding: .ascii),
+				dataString.hasPrefix("RIFF"),
+				dataString.hasSuffix("WEBP") {
+				format = "webp"
+			}
+
+		case 0x00 where imgData!.count >= 12 :
+			let subdata = imgData![8...11]
+
+			if let dataString = String(data: subdata, encoding: .ascii),
+				Set(["heic", "heix", "hevc", "hevx"]).contains(dataString) {
+				format = "heic"
+			}
+		default:
+			format = "unknown"
+		}
+		
+		let rawImage = format == "unknown" ? getVideoThumbnail(forUrl: url) : UIImage(data: imgData!)
+		
+		if rawImage == nil {
+			result(nil)
+			return
+		}
+		
+		let image: UIImage? = rawImage
+		
+		let dataAns = image?.jpegData(compressionQuality: quality)
+		
+		var ans = Dictionary<String, Any>()
+		ans["width"] = image?.size.width
+		ans["height"] = image?.size.height
+		ans["filesize"] = dataAns?.count
+		ans["image"] = dataAns
+		ans["filepath"] = uri
+						
+		result(ans)
+	}
+
     private func getAlbumThumbnail(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         let args = call.arguments as? Dictionary<String, Any>
         let albumUri = (args?["albumUri"] as? String)
