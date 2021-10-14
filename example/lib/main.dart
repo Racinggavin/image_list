@@ -161,7 +161,7 @@ class _MyAppState extends State<MyApp> {
       this.controller!.getSelectedMedia().then((res) {
         if (res == null) return;
 
-        ImageListPlugin.getThumbnail(size: 100, imageUri: res.first.uri!).then((value) {
+        ImageListPlugin.getOriginal(imageUri: res.first.uri!).then((OriginalPhotoItem original) {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -170,12 +170,34 @@ class _MyAppState extends State<MyApp> {
                   appBar: AppBar(
                     title: Text("lalala"),
                   ),
-                  body: Center(child: Image.memory(value)),
+                  body: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: InteractiveViewer(
+                      child: Image.memory(original.image!),
+                    ),
+                  ),
                 );
               },
             ),
           );
         });
+
+        // ImageListPlugin.getThumbnail(size: 100, imageUri: res.first.uri!).then((value) {
+        //   Navigator.push(
+        //     context,
+        //     MaterialPageRoute(
+        //       builder: (BuildContext context) {
+        //         return Scaffold(
+        //           appBar: AppBar(
+        //             title: Text("lalala"),
+        //           ),
+        //           body: Center(child: Image.memory(value)),
+        //         );
+        //       },
+        //     ),
+        //   );
+        // });
 
         // File f = File(res.first.assetId);
         // late Widget preview;

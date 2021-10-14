@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
@@ -52,6 +53,21 @@ class ImageListPlugin {
     );
 
     return Uint8List.fromList(raw ?? <int>[]);
+  }
+
+  static Future<OriginalPhotoItem> getOriginal({
+    required String imageUri,
+    int quality = 100,
+  }) async {
+    final Map<dynamic, dynamic> result = await _channel.invokeMethod(
+      'getOriginal',
+      {
+        'uri': imageUri,
+        'quality': quality,
+      },
+    );
+
+    return OriginalPhotoItem.fromMap(result);
   }
 
   static Future<Uint8List> getAlbumThumbnail({
@@ -126,6 +142,34 @@ class AlbumWithThumbnail extends Album {
       album.identifier,
       album.count,
       thumbnail: thumbnail,
+    );
+  }
+}
+
+class OriginalPhotoItem {
+  final Size resolution;
+  final int filesize;
+  final Uint8List? image;
+  final String filepath;
+  const OriginalPhotoItem({
+    required this.resolution,
+    required this.filesize,
+    this.image,
+    required this.filepath,
+  });
+
+  static OriginalPhotoItem fromMap(Map<dynamic, dynamic> obj) {
+    final width = (obj['width'] ?? 0).toDouble();
+    final height = (obj['height'] ?? 0).toDouble();
+    final filesize = obj['filesize'] ?? 0;
+    final image = obj['image'];
+    final filepath = obj['filepath'] ?? '';
+
+    return OriginalPhotoItem(
+      resolution: Size(width, height),
+      filesize: filesize,
+      image: image,
+        filepath: filepath,
     );
   }
 }

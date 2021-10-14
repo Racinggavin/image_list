@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -126,6 +127,30 @@ public class ImageListPlugin implements FlutterPlugin, MethodCallHandler, Activi
             };
 
             getThumbnail(callback, uriString, width, height, quality, "");
+        } else if (call.method.equals("getOriginal")) {
+            String uriString = null;
+            Integer quality = 100;
+
+            if (call.arguments instanceof HashMap) {
+                Map<String, Object> params = (Map<String, Object>) call.arguments;
+                uriString = params.get("uri") == null ? null : params.get("uri").toString();
+                quality = params.get("quality") == null ? 100 : Integer.parseInt(params.get("quality").toString());
+            }
+
+            OriginalCallback callback = new OriginalCallback() {
+                @Override
+                public void onOriginalReady(String uri, byte[] bytes, int width, int height, int filesize) {
+                    Map<String, Object> ans = new HashMap<String, Object>();
+                    ans.put("width", width);
+                    ans.put("height", height);
+                    ans.put("filesize", filesize);
+                    ans.put("image", bytes);
+                    ans.put("filepath", uri);
+                    result.success(ans);
+                }
+            };
+
+            getOriginal(callback, uriString, quality, "");
         } else if (call.method.equals("getAlbumThumbnail")) {
             String albumUriString = null;
             Integer width = null;
@@ -339,7 +364,7 @@ public class ImageListPlugin implements FlutterPlugin, MethodCallHandler, Activi
         ContentResolver contentResolver = context.getContentResolver();
         MimeTypeMap mime = MimeTypeMap.getSingleton();
         String type = mime.getExtensionFromMimeType(contentResolver.getType(uri));
-        Log.d("ricric", "url > " + url);
+
         final Bitmap.CompressFormat compressFormat = type != null && type.endsWith("png") ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
         final Integer finalQuality = quality;
 
@@ -371,8 +396,58 @@ public class ImageListPlugin implements FlutterPlugin, MethodCallHandler, Activi
                     }
                 });
     }
+
+    public void getOriginal(final OriginalCallback callback, String url, int quality, final String x) {
+        Uri uri = null;
+
+        if (url == null) {
+            callback.onOriginalReady(url,null,0,0,0);
+        } else {
+            uri = Uri.parse(url);
+        }
+        Log.d("gavin", " getOriginal url" + url);
+
+        ContentResolver contentResolver = context.getContentResolver();
+        MimeTypeMap mime = MimeTypeMap.getSingleton();
+        String type = mime.getExtensionFromMimeType(contentResolver.getType(uri));
+
+        final Bitmap.CompressFormat compressFormat = type != null && type.endsWith("png") ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
+        final Integer finalQuality = quality;
+
+        final Uri finalUri = uri;
+        Glide
+                .with(context)
+                .asBitmap()
+                .load(uri)
+                //.transcode(new BitmapSizeTranscoder(), Size.class)
+                .priority(Priority.IMMEDIATE)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        resource.compress(compressFormat, finalQuality, bos);
+                        Log.d("gavin", String.format(Locale.ROOT, "%dx%d %d bytes", resource.getWidth(), resource.getHeight(), bos.toByteArray().length));
+                        callback.onOriginalReady(url, bos.toByteArray(), resource.getWidth(), resource.getHeight(), bos.toByteArray().length);
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        callback.onOriginalReady(url,null,0,0,0);
+                    }
+
+                    @Override
+                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                        super.onLoadFailed(errorDrawable);
+                        Log.d("gavin", "failed on (" +  x + ") " + finalUri);
+                    }
+                });
+    }
 }
 
 interface ThumbnailCallback {
     public void onThumbnailReady(byte[] bytes);
+}
+
+interface OriginalCallback {
+    public void onOriginalReady(String uri, byte[] bytes, int width, int height, int filesize);
 }
